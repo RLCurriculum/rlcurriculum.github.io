@@ -1,0 +1,152 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+body {
+  overflow-x: hidden;
+}
+
+.figload {
+  font-family: Helvetica,Arial,sans-serif;
+  font-weight: 400;
+  color: rgba(0, 174, 239, .8);
+  font-size: 24px;
+  line-height: 1.5em;
+  display: block;
+  width: 100%;
+  text-align: center;
+  position: absolute;
+  top: calc(50% - 80px + 190px);
+}
+
+dt-article figcaption {
+  padding: 0.5em;
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 16px;
+  font-style: italic;
+  line-height: 1.5em;
+  text-align: left;
+}
+
+dt-article figcaption a {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+dt-article figcaption b {
+  font-weight: 600;
+  color: rgba(0, 0, 0, 1.0);
+}
+
+*.unselectable {
+    -moz-user-select: -moz-none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+}
+*.svgunselectable {
+    -moz-user-select: -moz-none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+    background: none;
+    pointer-events: none;
+}
+
+.switcher {
+  opacity: 0.6;
+  border: 2px solid rgb(255, 255, 255);
+}
+.switcher.selected {
+  opacity: 1.0;
+  border: 2px solid rgba(0, 0, 0, .5);
+}
+
+</style>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <!-- roboto font -->
+  <link href='https://fonts.googleapis.com/css?family=Roboto:300' rel='stylesheet' type='text/css'>
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+  <!-- SEO -->
+  <meta property="og:title" content="Automated Curriculum Learning" />
+  <meta property="og:type" content="article" />
+  <meta property="og:description" content="Can agents learn to teach themselves?"/>
+  <!-- <meta property="og:image" content="FILLME/assets/card_both.png" /> -->
+  <!-- <meta property="og:url" content="FILLME/" /> -->
+  <meta property="og:site_name" content="Automated Curriculum Learning" />
+  <!-- Twitter Card data -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Automated Curriculum Learning" />
+  <meta name="twitter:description" content="Can agents learn to teach themselves?" />
+  <!-- <meta name="twitter:image" content="FILLME/assets/card_single.png" /> -->
+  <meta name="citation_title" content="Automated Curriculum Learning">
+  <meta name="citation_volume" content="1">
+  <meta name="citation_issue" content="1">
+  <meta name="citation_firstpage" content="e10">
+  <meta name="citation_fulltext_world_readable" content="">
+  <meta name="citation_fulltext_html_url" content="">
+  <meta name="citation_online_date" content="2018/07/01">
+  <meta name="citation_publication_date" content="2018/07/01">
+  <meta name="citation_author" content="Behbahani, Feryal">
+  <meta name="citation_author_institution" content="Jeju Deep Learning Camp">
+  <meta name="citation_journal_title" content="Automated Curriculum Learning">
+  <meta name="citation_journal_abbrev" content="Automated Curriculum Learning">
+  <meta name="citation_pdf_url" content="">
+
+  <script>
+  function switchBarplot(activateImgId) {
+    let plots = [
+      "assets/results_barplot_1.png",
+      "assets/results_barplot_2.png",
+      "assets/results_barplot_3.png"];
+    // Change image
+    document.getElementById("barplot-switched").src = plots[activateImgId - 1];
+    // Change the switcher to indicate which image is currently highlighted
+    for (let imgId = 1; imgId <= plots.length; imgId++) {
+      let switcher_elem = document.getElementById("switcher-" + imgId);
+      if (imgId == activateImgId) {
+        switcher_elem.classList.add("selected");
+      } else {
+        switcher_elem.classList.remove("selected");
+      }
+    }
+  }
+  </script>
+</head>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.5.1/katex.min.css">
+<script src="template.v1.js"></script>
+
+<script type="text/front-matter">
+  title: "Automated Curriculum Learning"
+  description: "Can an agent to learn inside of its own dream?"
+</script>
+<body>
+<dt-article id="dtbody">
+<dt-byline class="l-page transparent"></dt-byline>
+<h1>Automated Curriculum Learning for Reinforcement Learning</h1>
+<p></p>
+<h2>Towards creating agents that can teach themselves!</h2>
+<dt-byline class="l-page" id="authors_section" hidden>
+<div class="byline">
+  <div class="authors">
+    <div class="author">
+        <a class="name" href="https://twitter.com/feryalmp">Feryal Behbahani</a>
+        <a class="affiliation" href="">Jeju DL Camp</a>
+        <a class="affiliation" href="http://feryal.github.io/">feryal.github.io</a>
+    </div>
+  </div>
+  <div class="date">
+    <div class="month">July</div>
+    <div class="year">2018</div>
+    <div class="year">&nbsp;</div>
+  </div>
+  <div class="date">
+    <div class="month">Open Source Code</div>
+    <div class="year" style="color: #668;"><a href="https://github.com/Feryal/automated-curriculum-rl">GitHub Repo</a></div>
+    <div class="year">&nbsp;</div>
+  </div>
+</div>
+</dt-byline>

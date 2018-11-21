@@ -1,0 +1,588 @@
+<!doctype html>
+<meta charset="utf-8">
+<style>
+body {
+  overflow-x: hidden;
+}
+
+.figload {
+  font-family: Helvetica,Arial,sans-serif;
+  font-weight: 400;
+  color: rgba(0, 174, 239, .8);
+  font-size: 24px;
+  line-height: 1.5em;
+  display: block;
+  width: 100%;
+  text-align: center;
+  position: absolute;
+  top: calc(50% - 80px + 190px);
+}
+
+dt-article figcaption {
+  padding: 0.5em;
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 16px;
+  font-style: italic;
+  line-height: 1.5em;
+  text-align: left;
+}
+
+dt-article figcaption a {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+dt-article figcaption b {
+  font-weight: 600;
+  color: rgba(0, 0, 0, 1.0);
+}
+
+*.unselectable {
+    -moz-user-select: -moz-none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+}
+*.svgunselectable {
+    -moz-user-select: -moz-none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+    background: none;
+    pointer-events: none;
+}
+
+.switcher {
+  opacity: 0.6;
+  border: 2px solid rgb(255, 255, 255);
+}
+.switcher.selected {
+  opacity: 1.0;
+  border: 2px solid rgba(0, 0, 0, .5);
+}
+
+</style>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <!-- roboto font -->
+  <link href='https://fonts.googleapis.com/css?family=Roboto:300' rel='stylesheet' type='text/css'>
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+  <!-- SEO -->
+  <meta property="og:title" content="Automated Curriculum Learning" />
+  <meta property="og:type" content="article" />
+  <meta property="og:description" content="Can agents learn to teach themselves?"/>
+  <!-- <meta property="og:image" content="FILLME/assets/card_both.png" /> -->
+  <!-- <meta property="og:url" content="FILLME/" /> -->
+  <meta property="og:site_name" content="Automated Curriculum Learning" />
+  <!-- Twitter Card data -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Automated Curriculum Learning" />
+  <meta name="twitter:description" content="Can agents learn to teach themselves?" />
+  <!-- <meta name="twitter:image" content="FILLME/assets/card_single.png" /> -->
+  <meta name="citation_title" content="Automated Curriculum Learning">
+  <meta name="citation_volume" content="1">
+  <meta name="citation_issue" content="1">
+  <meta name="citation_firstpage" content="e10">
+  <meta name="citation_fulltext_world_readable" content="">
+  <meta name="citation_fulltext_html_url" content="">
+  <meta name="citation_online_date" content="2018/07/01">
+  <meta name="citation_publication_date" content="2018/07/01">
+  <meta name="citation_author" content="Behbahani, Feryal">
+  <meta name="citation_author_institution" content="Jeju Deep Learning Camp">
+  <meta name="citation_journal_title" content="Automated Curriculum Learning">
+  <meta name="citation_journal_abbrev" content="Automated Curriculum Learning">
+  <meta name="citation_pdf_url" content="">
+
+  <script>
+  function switchBarplot(activateImgId) {
+    let plots = [
+      "assets/results_barplot_1.png",
+      "assets/results_barplot_2.png",
+      "assets/results_barplot_3.png"];
+    // Change image
+    document.getElementById("barplot-switched").src = plots[activateImgId - 1];
+    // Change the switcher to indicate which image is currently highlighted
+    for (let imgId = 1; imgId <= plots.length; imgId++) {
+      let switcher_elem = document.getElementById("switcher-" + imgId);
+      if (imgId == activateImgId) {
+        switcher_elem.classList.add("selected");
+      } else {
+        switcher_elem.classList.remove("selected");
+      }
+    }
+  }
+  </script>
+</head>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.5.1/katex.min.css">
+<script src="template.v1.js"></script>
+
+<script type="text/front-matter">
+  title: "Automated Curriculum Learning"
+  description: "Can an agent to learn inside of its own dream?"
+</script>
+<body>
+<dt-article id="dtbody">
+<dt-byline class="l-page transparent"></dt-byline>
+<h1>Automated Curriculum Learning for Reinforcement Learning</h1>
+<p></p>
+<h2>Towards creating agents that can teach themselves!</h2>
+<dt-byline class="l-page" id="authors_section" hidden>
+<div class="byline">
+  <div class="authors">
+    <div class="author">
+        <a class="name" href="https://twitter.com/feryalmp">Feryal Behbahani</a>
+        <a class="affiliation" href="">Jeju DL Camp</a>
+        <a class="affiliation" href="http://feryal.github.io/">feryal.github.io</a>
+    </div>
+  </div>
+  <div class="date">
+    <div class="month">July</div>
+    <div class="year">2018</div>
+    <div class="year">&nbsp;</div>
+  </div>
+  <div class="date">
+    <div class="month">Open Source Code</div>
+    <div class="year" style="color: #668;"><a href="https://github.com/Feryal/automated-curriculum-rl">GitHub Repo</a></div>
+    <div class="year">&nbsp;</div>
+  </div>
+</div>
+</dt-byline><h2>Introduction</h2>
+<div style="text-align: left;">
+<img src="assets/teacher_student_RL.png" style="display: block; margin: auto; width: 80%;"/>
+<figcaption>A schematic figure of teacher-student setup. </figcaption>
+</div>
+<p>How would you teach an artificial agent to learn a complex problem, requiring multiple skills but which has very sparse rewards and where you can fail easily?
+Humans would tackle this by splitting this hard problem into simpler ones (i.e. creating a <em>curriculum</em>), learn them individually, and finally leverage this knowledge to tackle the more complex task.
+However, designing this curriculum by hand is time-consuming and very error-prone. Deciding exactly what sub-task to present to an agent and for how long is also underconstrained.</p>
+<p>For humans, we would usually rely on teachers to guide our learning by matching the lessons to our competency and increase the difficulty as we learn to master more complex skills.
+We can actually do the same in the context of neural networks by introducing a <strong>Teacher</strong> network which learns to generate a curriculum of simpler tasks, so that overall the <strong>student</strong> network can gradually learn to solve the complex task.</p>
+<p>In this project, I set out to train an automatic curriculum generator using a teacher network which keeps track of the progress of the student network, and proposes new tasks as a function of how well the student is learning.</p>
+<p>This is done in the context of a 2D crafting game, where an agent can learn increasingly complex recipes, to collect resources and treasure while moving around in a 2D gridworld.
+I adapted an environment which is fast and efficient to iterate on: <a href="https://github.com/Feryal/craft-env">Craft Env</a>. It supports fully flexible and hierarchical crafting tasks, covering a wide range of difficulty.</p>
+<p>I adapted an state-of-the-art distributed reinforcement learning algorithm, for training the student network, while using an adversarial multi-armed bandit algorithm, for the teacher network.
+One important aspect of this framework is the choice of the metric for quantifying student progress, and how it affects the curriculum that the teacher learns to propose. I explored some alternatives and will discuss their effects.</p>
+<p>Overall, I found that this approach can accelerate learning and interpretability of how the agent is learning to perform complex tasks, and successfully allowed to learn tasks quicker.</p>
+<hr>
+<h2>Environment</h2>
+<p>We use a procedural 2D crafting environment, <a href="https://github.com/Feryal/craft-env">Craft Env</a>, adapted from <dt-cite key="2016arXiv161101796A">Andreas et al. 2016</dt-cite>.
+It supports a fully flexible setup of hierarchical tasks, with sparse rewards, in a fully procedural setting.</p>
+<p>In this environment, an agent has to:</p>
+<ul>
+<li>Move around</li>
+<li>Pick up items and keeping them in an inventory</li>
+<li>Transform things at workshops</li>
+</ul>
+<p>Tasks are quite varied, and require to pick up components and create various items.
+Here is an example of what is required to perform the task <strong>pick up gold</strong> (see Figure below):</p>
+<ol>
+<li>Get wood</li>
+<li>Make plank:  Get wood → Use workbench</li>
+<li>Make bridge: Get wood → Get iron → Use factory</li>
+<li>Get gold: Make bridge → Use bridge on water</li>
+</ol>
+<div style="text-align: left;">
+<img src="assets/env_task_gold.png" style="display: block; margin: auto; width: 100%;"/>
+<figcaption> <b> Crafting environment example for a complex multi-step task.</b> <br/>
+When provided with a "get gold" task by the Teacher, the agent needs to first collect wood, transform it at a workshop to construct a bridge, in order to finally pass across the water and reach the gold.  </figcaption>
+</div>
+<p>This kind of multi-step action sequences can be really hard to learn, given that agents usually only perform random exploration.</p>
+<p>In total, we have defined a collection of 17 tasks, ranging from simple &quot;collection&quot; tasks to more complex ones that require crafting several items to succeed.
+See the next Figure for a complex list, along with an indication of their difficulty.</p>
+<div style="text-align: left;">
+<img src="assets/env_task_list.png" style="display: block; margin: auto; width: 70%;"/>
+<figcaption>  <b>Full list of tasks considered in our crafting environment. </b><br/>
+Tasks range from simple collection "Get X" tasks, slightly more difficult crafting tasks (requiring to collect items before), all the way to complex tasks requiring several crafted components which depend themselves on sub-tasks. </figcaption>
+</div>
+<p>We wrote a visualisation tool to see how these environments look like and how agents interact with it.
+This is currently only used for post-hoc analysis or debugging, as our agent instead receives a set of features (see next section).
+But in future work, we could instead directly use this 2D observation.</p>
+<div style="text-align: center;">
+<video autoplay muted playsinline loop style="display: block; margin: auto; width: 50%;"><source src="assets/mp4/random_agent.mp4" type="video/mp4"/></video>
+<figcaption><b> Visualisation of a random agent trying to solve the "Get grass" task. </b><br/>
+The instruction is shown at the top, the 2D grid in the middle and the inventory is shown at the bottom. Each color correspond to a different object or workshop, the player is the red dot. When the player picks up a green square (grass), the screen flashes to indicate a positive reward.</figcaption>
+</div>
+<hr>
+<h2>Problem setup</h2>
+<p>We use two networks that will interact together (without passing gradients through):</p>
+<div style="text-align: left;">
+<img src="assets/student_teacher.png" style="display: block; margin: auto; width: 80%;"/>
+<figcaption>Our Automated Curriculum Learning setup, with both a Teacher and Student networks. </figcaption>
+</div>
+<ol>
+<li><strong>Student network:</strong> receives a task, and is expected to interact in the environment and learn how to solve it.</li>
+<li><strong>Teacher network:</strong> proposes tasks by observing the <em>progress signal</em> of the student and sampling new tasks that maximise this signal.</li>
+</ol>
+<p>We will cover each of these components in turn, let's starts by the Student.</p>
+<hr>
+<h3>Student</h3>
+<div style="text-align: left;">
+<img src="assets/student.png" style="display: block; margin: auto; width: 40%;"/>
+</div>
+<p>The student can be any classical Deep Reinforcement Learning agent, as from its point of view, it is only expected to solve tasks provided to it. It will be trained end-to-end, using the extrinsic reward function of the task being tackled.</p>
+<p>We decided to use <dt-cite key="DBLP:journals/corr/abs-1802-01561">IMPALA </dt-cite>, an efficient and distributed Actor Critic method recently published by DeepMind.
+It implements an Advantage Actor Critic method, with an Off-policy <em>V-Trace</em> correction. It scales up to use many actors gathering data in a distributed fashion, while a single learning can be run on GPU to a very high throughput.</p>
+<p>Additionally, it recently got <dt-cite key="impala_github">open sourced</dt-cite>, which allowed us to use and extend the codebase to our needs.</p>
+<p>A schematic of the Actor-Critic loop is shown below. We use 32 actors to gather experience in their own environments, sending their data and observed data back to a centralized queue for the learner to use.</p>
+<div style="text-align: left;">
+<img src="assets/student_actor_critic.png" style="display: block; margin: auto; width: 75%;"/>
+<figcaption>Schematic of Actor-Critic, in the context of our crafting environment. </figcaption>
+</div>
+<p>Our student uses an architecture adapted from IMPALA, consisting overall of a vision module, a language/instruction module, which both send inputs to a recurrent policy core, from which the policy, sampling actions will be extracted (along with a critic predicting the value of the current state).
+We replaced the convolutional or ResNet vision module by a fully connected stack.
+This is because our observations consist of a flattened vector of features consisting of: 1-hot indicators of the type of element in a given cell, a 5x5 egocentric view around the agent and its inventory.
+We provide the current task as a string instruction, which will be embedded by the agent before being processed by a LSTM to handle multiple words.
+Details of the architecture can be found in the <a href="#appendix">Appendix</a>.</p>
+<div style="text-align: left;">
+<img src="assets/student_network.png" style="display: block; margin: auto; width: 60%;"/>
+<figcaption>Architecture for the network used by our Student. </figcaption>
+</div>
+<p>In addition, our <dt-cite key="jeju_project_github">implementation of IMPALA</dt-cite> extends the original IMPALA to:</p>
+<ul>
+<li>Handle new Craft Environment, adapted from <dt-cite key="2016arXiv161101796A">Andreas et al, 2016</dt-cite>, procedurally creating gridworld tasks given a set of rules.</li>
+<li>Support “switchable” environments, to change tasks on the fly. This is done fully in-graph in Tensorflow and required to handle the data used by the learner appropriately.</li>
+<li>Evaluation built-in during training, extensive tracking of performance.</li>
+</ul>
+<hr>
+<h2>Teacher</h2>
+<div style="text-align: left;">
+<img src="assets/teacher.png" style="display: block; margin: auto; width: 40%;"/>
+</div>
+<p>The teacher should be able to follow the student progress, and propose tasks in a sequence which overall should lead to the student solving complex tasks it couldn't before.
+It effectively needs to <em>explore</em> the space of tasks effectively, as depending on the expertise of the student the same task can be valuable or useless.</p>
+<div style="text-align: left;">
+<img src="assets/bandit.png" style="display: block; margin: auto; width: 70%;"/>
+<figcaption>A cartoon figure of bandit algorithm! (taken from <dt-cite key="graves2017automated"></dt-cite>). </figcaption>
+</div>
+<p>We decided to use a <strong>Multi-armed bandit</strong> approach for this purpose.
+Bandits have been extremely well-studied in the literature and benefit from having optimality proofs for their exploration/exploitation behaviours.
+They also have been studied in the context of curriculum design before by <dt-cite key="graves2017automated">Graves et al</dt-cite> which inspired this work.</p>
+<p>Multi-armed bandits are related to Reinforcement Learning (see Table below, from <dt-cite key="2015arXiv150803326Z"></dt-cite>), and they actually correspond to a simpler situation where actions don’t affect the world directly.</p>
+<div style="text-align: left;">
+<img src="assets/bandit_vs_rl.png" style="display: block; margin: auto; width: 80%;"/>
+<figcaption>Comparison between Bandit algorithms and Reinforcement learning<dt-cite key="2015arXiv150803326Z"></dt-cite>. </figcaption>
+</div>
+<p>The idea is to have one “arm” per task, and try to find which tasks has the highest reward. In our case, reward really means “student progress”.
+Several algorithms exist, all with different behaviours and theoretical properties.</p>
+<p>We used a standard algorithm called <strong>&quot;EXP3&quot;</strong>: Exponential-weight algorithm for Exploration and Exploitation <dt-cite key="Auer:2003:NMB:589343.589365"></dt-cite>.
+EXP3 optimizes for minimum regret (the expected difference between the sum of the rewards of the policy and an optimal strategy), and can be summarized by the following equations:</p>
+<p><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>P</mi><mo>(</mo><mtext><mi mathvariant="normal">p</mi><mi mathvariant="normal">i</mi><mi mathvariant="normal">c</mi><mi mathvariant="normal">k</mi><mtext> </mtext><mi mathvariant="normal">t</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">s</mi><mi mathvariant="normal">k</mi><mtext> </mtext></mtext><mi>k</mi><mo>)</mo><mo>=</mo><mo>(</mo><mn>1</mn><mo>−</mo><mi>γ</mi><mo>)</mo><mfrac><mrow><msub><mi>w</mi><mi>k</mi></msub><mo>(</mo><mi>t</mi><mo>)</mo></mrow><mrow><msubsup><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>K</mi></msubsup><msub><mi>w</mi><mi>i</mi></msub><mo>(</mo><mi>t</mi><mo>)</mo></mrow></mfrac><mo>+</mo><mfrac><mrow><mi>γ</mi></mrow><mrow><mi>K</mi></mrow></mfrac></mrow><annotation encoding="application/x-tex">P(\text{pick task } k) = (1 - \gamma) \frac{w_k(t)}{\sum_{i=1}^K w_i(t)} + \frac{\gamma}{K}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:1.01em;"></span><span class="strut bottom" style="height:1.6264720000000001em;vertical-align:-0.616472em;"></span><span class="base textstyle uncramped"><span class="mord mathit" style="margin-right:0.13889em;">P</span><span class="mopen">(</span><span class="text mord textstyle uncramped"><span class="mord mathrm">p</span><span class="mord mathrm">i</span><span class="mord mathrm">c</span><span class="mord mathrm">k</span><span class="mord mspace"> </span><span class="mord mathrm">t</span><span class="mord mathrm">a</span><span class="mord mathrm">s</span><span class="mord mathrm">k</span><span class="mord mspace"> </span></span><span class="mord mathit" style="margin-right:0.03148em;">k</span><span class="mclose">)</span><span class="mrel">=</span><span class="mopen">(</span><span class="mord mathrm">1</span><span class="mbin">−</span><span class="mord mathit" style="margin-right:0.05556em;">γ</span><span class="mclose">)</span><span class="mord reset-textstyle textstyle uncramped"><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span><span class="mfrac"><span class="vlist"><span style="top:0.406465em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord scriptstyle cramped"><span class="mop"><span class="op-symbol small-op mop" style="top:0.074995em;">∑</span><span class="vlist"><span style="top:0.30001em;margin-left:0em;margin-right:0.07142857142857144em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-scriptstyle scriptscriptstyle cramped"><span class="mord scriptscriptstyle cramped"><span class="mord mathit">i</span><span class="mrel">=</span><span class="mord mathrm">1</span></span></span></span><span style="top:-0.364em;margin-right:0.07142857142857144em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-scriptstyle scriptscriptstyle cramped"><span class="mord mathit" style="margin-right:0.07153em;">K</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mord"><span class="mord mathit" style="margin-right:0.02691em;">w</span><span class="vlist"><span style="top:0.15em;margin-right:0.07142857142857144em;margin-left:-0.02691em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-scriptstyle scriptscriptstyle cramped"><span class="mord mathit">i</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mopen">(</span><span class="mord mathit">t</span><span class="mclose">)</span></span></span></span><span style="top:-0.22999999999999998em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped frac-line"></span></span><span style="top:-0.485em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord scriptstyle uncramped"><span class="mord"><span class="mord mathit" style="margin-right:0.02691em;">w</span><span class="vlist"><span style="top:0.15122857142857138em;margin-right:0.07142857142857144em;margin-left:-0.02691em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-scriptstyle scriptscriptstyle cramped"><span class="mord mathit" style="margin-right:0.03148em;">k</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mopen">(</span><span class="mord mathit">t</span><span class="mclose">)</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span></span><span class="mbin">+</span><span class="mord reset-textstyle textstyle uncramped"><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span><span class="mfrac"><span class="vlist"><span style="top:0.345em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord scriptstyle cramped"><span class="mord mathit" style="margin-right:0.07153em;">K</span></span></span></span><span style="top:-0.22999999999999998em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped frac-line"></span></span><span style="top:-0.44610799999999995em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord scriptstyle uncramped"><span class="mord mathit" style="margin-right:0.05556em;">γ</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span></span></span></span></span></p>
+<p><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>w</mi><mi>k</mi></msub><mo>(</mo><mi>t</mi><mo>+</mo><mn>1</mn><mo>)</mo><mo>=</mo><mrow><mo fence="true">{</mo><mtable><mtr><mtd><mrow><msub><mi>w</mi><mi>k</mi></msub><mo>(</mo><mi>t</mi><mo>)</mo><msup><mi>e</mi><mrow><mi>γ</mi><mover accent="true"><mrow><mi>r</mi></mrow><mo>^</mo></mover><mo>(</mo><mi>t</mi><mo>)</mo><mi mathvariant="normal">/</mi><mi>K</mi></mrow></msup></mrow></mtd><mtd><mrow><mtext><mi mathvariant="normal">s</mi><mi mathvariant="normal">e</mi><mi mathvariant="normal">l</mi><mi mathvariant="normal">e</mi><mi mathvariant="normal">c</mi><mi mathvariant="normal">t</mi><mi mathvariant="normal">e</mi><mi mathvariant="normal">d</mi><mtext> </mtext><mi mathvariant="normal">t</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">s</mi><mi mathvariant="normal">k</mi></mtext></mrow></mtd></mtr><mtr><mtd><mrow><msub><mi>w</mi><mi>k</mi></msub><mo>(</mo><mi>t</mi><mo>)</mo></mrow></mtd><mtd><mrow><mtext><mi mathvariant="normal">o</mi><mi mathvariant="normal">t</mi><mi mathvariant="normal">h</mi><mi mathvariant="normal">e</mi><mi mathvariant="normal">r</mi><mtext> </mtext><mi mathvariant="normal">t</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">s</mi><mi mathvariant="normal">k</mi><mi mathvariant="normal">s</mi></mtext></mrow></mtd></mtr></mtable></mrow></mrow><annotation encoding="application/x-tex">w_k(t+1) = \begin{cases}
+    w_k(t) e^{\gamma \hat{r}(t)/K}  &amp; \text{selected task} \\
+    w_k(t) &amp; \text{other tasks}
+\end{cases}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:1.75em;"></span><span class="strut bottom" style="height:3.0000299999999998em;vertical-align:-1.25003em;"></span><span class="base textstyle uncramped"><span class="mord"><span class="mord mathit" style="margin-right:0.02691em;">w</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.02691em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit" style="margin-right:0.03148em;">k</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mopen">(</span><span class="mord mathit">t</span><span class="mbin">+</span><span class="mord mathrm">1</span><span class="mclose">)</span><span class="mrel">=</span><span class="minner textstyle uncramped"><span class="style-wrap reset-textstyle textstyle uncramped" style="top:0em;"><span class="delimsizing size4">{</span></span><span class="mord"><span class="mtable"><span class="col-align-l"><span class="vlist"><span style="top:-0.6819999999999999em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="mord textstyle uncramped"><span class="mord"><span class="mord mathit" style="margin-right:0.02691em;">w</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.02691em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit" style="margin-right:0.03148em;">k</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mopen">(</span><span class="mord mathit">t</span><span class="mclose">)</span><span class="mord"><span class="mord mathit">e</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord scriptstyle uncramped"><span class="mord mathit" style="margin-right:0.05556em;">γ</span><span class="mord accent"><span class="vlist"><span style="top:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="mord scriptstyle cramped"><span class="mord mathit" style="margin-right:0.02778em;">r</span></span></span><span style="top:0em;margin-left:0.11112em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="accent-body"><span>^</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mopen">(</span><span class="mord mathit">t</span><span class="mclose">)</span><span class="mord mathrm">/</span><span class="mord mathit" style="margin-right:0.07153em;">K</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span><span style="top:0.7579999999999999em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="mord textstyle uncramped"><span class="mord"><span class="mord mathit" style="margin-right:0.02691em;">w</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.02691em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit" style="margin-right:0.03148em;">k</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mopen">(</span><span class="mord mathit">t</span><span class="mclose">)</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="arraycolsep" style="width:1em;"></span><span class="col-align-l"><span class="vlist"><span style="top:-0.6819999999999999em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="mord textstyle uncramped"><span class="text mord textstyle uncramped"><span class="mord mathrm">s</span><span class="mord mathrm">e</span><span class="mord mathrm">l</span><span class="mord mathrm">e</span><span class="mord mathrm">c</span><span class="mord mathrm">t</span><span class="mord mathrm">e</span><span class="mord mathrm">d</span><span class="mord mspace"> </span><span class="mord mathrm">t</span><span class="mord mathrm">a</span><span class="mord mathrm">s</span><span class="mord mathrm">k</span></span></span></span><span style="top:0.7579999999999999em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="mord textstyle uncramped"><span class="text mord textstyle uncramped"><span class="mord mathrm">o</span><span class="mord mathrm">t</span><span class="mord mathrm">h</span><span class="mord mathrm">e</span><span class="mord mathrm">r</span><span class="mord mspace"> </span><span class="mord mathrm">t</span><span class="mord mathrm">a</span><span class="mord mathrm">s</span><span class="mord mathrm">k</span><span class="mord mathrm">s</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span></span></span></span></span></p>
+<p><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mover accent="true"><mrow><mi>r</mi></mrow><mo>^</mo></mover><mo>(</mo><mi>t</mi><mo>)</mo><mo>=</mo><mfrac><mrow><mi>r</mi><mo>(</mo><mi>t</mi><mo>)</mo></mrow><mrow><mi>P</mi><mo>(</mo><mtext><mi mathvariant="normal">p</mi><mi mathvariant="normal">i</mi><mi mathvariant="normal">c</mi><mi mathvariant="normal">k</mi><mtext> </mtext><mi mathvariant="normal">t</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">s</mi><mi mathvariant="normal">k</mi><mtext> </mtext></mtext><mi>k</mi><mo>)</mo></mrow></mfrac></mrow><annotation encoding="application/x-tex">\hat{r}(t) = \frac{r(t)}{P(\text{pick task } k)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:1.01em;"></span><span class="strut bottom" style="height:1.53em;vertical-align:-0.52em;"></span><span class="base textstyle uncramped"><span class="mord accent"><span class="vlist"><span style="top:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="mord textstyle cramped"><span class="mord mathit" style="margin-right:0.02778em;">r</span></span></span><span style="top:0em;margin-left:0.11112em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="accent-body"><span>^</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mopen">(</span><span class="mord mathit">t</span><span class="mclose">)</span><span class="mrel">=</span><span class="mord reset-textstyle textstyle uncramped"><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span><span class="mfrac"><span class="vlist"><span style="top:0.34500000000000003em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord scriptstyle cramped"><span class="mord mathit" style="margin-right:0.13889em;">P</span><span class="mopen">(</span><span class="text mord scriptstyle cramped"><span class="mord mathrm">p</span><span class="mord mathrm">i</span><span class="mord mathrm">c</span><span class="mord mathrm">k</span><span class="mord mspace"> </span><span class="mord mathrm">t</span><span class="mord mathrm">a</span><span class="mord mathrm">s</span><span class="mord mathrm">k</span><span class="mord mspace"> </span></span><span class="mord mathit" style="margin-right:0.03148em;">k</span><span class="mclose">)</span></span></span></span><span style="top:-0.22999999999999998em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped frac-line"></span></span><span style="top:-0.485em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord scriptstyle uncramped"><span class="mord mathit" style="margin-right:0.02778em;">r</span><span class="mopen">(</span><span class="mord mathit">t</span><span class="mclose">)</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span></span></span></span></span></p>
+<p>If you are interested to learn more about this algorithm, you can find a toy example with code in the <a href="#appendix">Appendix</a>.</p>
+<h3>Progress signal</h3>
+<p>One important design decision for our Teacher is to select what do we mean by the student's <strong>progress signal</strong>.
+Indeed, depending on the choices we make to express how a given task has been <em>useful</em> to make the student learn, we can make our Teacher behave very differently.</p>
+<p>There has been a large variety of signals proposed in the literature to measure the <em>progress</em> of learning.
+They emphasise different aspects or definition of what <em>learning</em> means, varying from assessing performance improvements, to directly looking at changes in the computation being implemented by the student.
+<dt-cite key="graves2017automated">Graves et al</dt-cite> studies the progress signals shown in the Table below:</p>
+<table>
+<thead>
+<tr>
+<th>Progress Signal</th>
+<th><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mspace width="0.277778em"></mspace><mspace width="0.277778em"></mspace></mrow><annotation encoding="application/x-tex">\;\;</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0em;"></span><span class="strut bottom" style="height:0em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mspace thickspace"></span><span class="mord mspace thickspace"></span></span></span></span> Definition <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mspace width="0.277778em"></mspace><mspace width="0.277778em"></mspace></mrow><annotation encoding="application/x-tex">\;\;</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0em;"></span><span class="strut bottom" style="height:0em;vertical-align:0em;"></span><span class="base textstyle uncramped"><span class="mord mspace thickspace"></span><span class="mord mspace thickspace"></span></span></span></span></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Prediction gain (PG)</td>
+<td><div style="text-align: center;"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>ν</mi><mrow><mi>P</mi><mi>G</mi></mrow></msub><mo>:</mo><mo>=</mo><mi>L</mi><mo>(</mo><mi>x</mi><mo separator="true">,</mo><mi>θ</mi><mo>)</mo><mo>−</mo><mi>L</mi><mo>(</mo><mi>x</mi><mo separator="true">,</mo><msup><mi>θ</mi><mrow><mi mathvariant="normal">′</mi></mrow></msup><mo>)</mo></mrow><annotation encoding="application/x-tex">\nu_{PG} := L(x, \theta ) - L(x, \theta&#x27;)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.751892em;"></span><span class="strut bottom" style="height:1.001892em;vertical-align:-0.25em;"></span><span class="base textstyle uncramped"><span class="mord"><span class="mord mathit" style="margin-right:0.06366em;">ν</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.06366em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord scriptstyle cramped"><span class="mord mathit" style="margin-right:0.13889em;">P</span><span class="mord mathit">G</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mrel">:</span><span class="mrel">=</span><span class="mord mathit">L</span><span class="mopen">(</span><span class="mord mathit">x</span><span class="mpunct">,</span><span class="mord mathit" style="margin-right:0.02778em;">θ</span><span class="mclose">)</span><span class="mbin">−</span><span class="mord mathit">L</span><span class="mopen">(</span><span class="mord mathit">x</span><span class="mpunct">,</span><span class="mord"><span class="mord mathit" style="margin-right:0.02778em;">θ</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord scriptstyle uncramped"><span class="mord mathrm">′</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mclose">)</span></span></span></span></div></td>
+</tr>
+<tr>
+<td>Gradient prediction gain (GPG)</td>
+<td><div style="text-align: center;"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>ν</mi><mrow><mi>G</mi><mi>P</mi><mi>G</mi></mrow></msub><mo>:</mo><mo>=</mo><mi mathvariant="normal">∥</mi><mi mathvariant="normal">∇</mi><mi>L</mi><mo>(</mo><mi>x</mi><mo separator="true">,</mo><mi>θ</mi><mo>)</mo><msubsup><mi mathvariant="normal">∥</mi><mn>2</mn><mn>2</mn></msubsup></mrow><annotation encoding="application/x-tex">\nu_{GPG} := \| \nabla L(x, \theta) \|_2^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.8141079999999999em;"></span><span class="strut bottom" style="height:1.064108em;vertical-align:-0.25em;"></span><span class="base textstyle uncramped"><span class="mord"><span class="mord mathit" style="margin-right:0.06366em;">ν</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.06366em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord scriptstyle cramped"><span class="mord mathit">G</span><span class="mord mathit" style="margin-right:0.13889em;">P</span><span class="mord mathit">G</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mrel">:</span><span class="mrel">=</span><span class="mord mathrm">∥</span><span class="mord mathrm">∇</span><span class="mord mathit">L</span><span class="mopen">(</span><span class="mord mathit">x</span><span class="mpunct">,</span><span class="mord mathit" style="margin-right:0.02778em;">θ</span><span class="mclose">)</span><span class="mord"><span class="mord mathrm">∥</span><span class="vlist"><span style="top:0.24810799999999997em;margin-left:0em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathrm">2</span></span></span><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord mathrm">2</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span></div></td>
+</tr>
+<tr>
+<td>Self prediction gain (SPG)</td>
+<td><div style="text-align: center;"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>ν</mi><mrow><mi>S</mi><mi>P</mi><mi>G</mi></mrow></msub><mo>:</mo><mo>=</mo><mi>L</mi><mo>(</mo><msup><mi>x</mi><mrow><mi mathvariant="normal">′</mi></mrow></msup><mo separator="true">,</mo><mi>θ</mi><mo>)</mo><mo>−</mo><mi>L</mi><mo>(</mo><msup><mi>x</mi><mrow><mi mathvariant="normal">′</mi></mrow></msup><mo separator="true">,</mo><msup><mi>θ</mi><mrow><mi mathvariant="normal">′</mi></mrow></msup><mo>)</mo><mspace width="2em"></mspace><msup><mi>x</mi><mrow><mi mathvariant="normal">′</mi></mrow></msup><mo>∼</mo><msub><mi>D</mi><mi>k</mi></msub></mrow><annotation encoding="application/x-tex">\nu_{SPG} := L(x&#x27;, \theta) - L(x&#x27;, \theta&#x27;) \qquad x&#x27; \sim D_k</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.751892em;"></span><span class="strut bottom" style="height:1.001892em;vertical-align:-0.25em;"></span><span class="base textstyle uncramped"><span class="mord"><span class="mord mathit" style="margin-right:0.06366em;">ν</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.06366em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord scriptstyle cramped"><span class="mord mathit" style="margin-right:0.05764em;">S</span><span class="mord mathit" style="margin-right:0.13889em;">P</span><span class="mord mathit">G</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mrel">:</span><span class="mrel">=</span><span class="mord mathit">L</span><span class="mopen">(</span><span class="mord"><span class="mord mathit">x</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord scriptstyle uncramped"><span class="mord mathrm">′</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mpunct">,</span><span class="mord mathit" style="margin-right:0.02778em;">θ</span><span class="mclose">)</span><span class="mbin">−</span><span class="mord mathit">L</span><span class="mopen">(</span><span class="mord"><span class="mord mathit">x</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord scriptstyle uncramped"><span class="mord mathrm">′</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mpunct">,</span><span class="mord"><span class="mord mathit" style="margin-right:0.02778em;">θ</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord scriptstyle uncramped"><span class="mord mathrm">′</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mclose">)</span><span class="mord mspace qquad"></span><span class="mord"><span class="mord mathit">x</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord scriptstyle uncramped"><span class="mord mathrm">′</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mrel">∼</span><span class="mord"><span class="mord mathit" style="margin-right:0.02778em;">D</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.02778em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit" style="margin-right:0.03148em;">k</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span></div></td>
+</tr>
+<tr>
+<td>Target prediction gain (TPG)</td>
+<td><div style="text-align: center;"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>ν</mi><mrow><mi>T</mi><mi>P</mi><mi>G</mi></mrow></msub><mo>:</mo><mo>=</mo><mi>L</mi><mo>(</mo><msup><mi>x</mi><mrow><mi mathvariant="normal">′</mi></mrow></msup><mo separator="true">,</mo><mi>θ</mi><mo>)</mo><mo>−</mo><mi>L</mi><mo>(</mo><msup><mi>x</mi><mrow><mi mathvariant="normal">′</mi></mrow></msup><mo separator="true">,</mo><msup><mi>θ</mi><mrow><mi mathvariant="normal">′</mi></mrow></msup><mo>)</mo><mspace width="2em"></mspace><msup><mi>x</mi><mrow><mi mathvariant="normal">′</mi></mrow></msup><mo>∼</mo><msub><mi>D</mi><mi>N</mi></msub></mrow><annotation encoding="application/x-tex">\nu_{TPG} := L(x&#x27;, \theta) - L(x&#x27;, \theta&#x27;) \qquad x&#x27; \sim D_N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.751892em;"></span><span class="strut bottom" style="height:1.001892em;vertical-align:-0.25em;"></span><span class="base textstyle uncramped"><span class="mord"><span class="mord mathit" style="margin-right:0.06366em;">ν</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.06366em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord scriptstyle cramped"><span class="mord mathit" style="margin-right:0.13889em;">T</span><span class="mord mathit" style="margin-right:0.13889em;">P</span><span class="mord mathit">G</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mrel">:</span><span class="mrel">=</span><span class="mord mathit">L</span><span class="mopen">(</span><span class="mord"><span class="mord mathit">x</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord scriptstyle uncramped"><span class="mord mathrm">′</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mpunct">,</span><span class="mord mathit" style="margin-right:0.02778em;">θ</span><span class="mclose">)</span><span class="mbin">−</span><span class="mord mathit">L</span><span class="mopen">(</span><span class="mord"><span class="mord mathit">x</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord scriptstyle uncramped"><span class="mord mathrm">′</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mpunct">,</span><span class="mord"><span class="mord mathit" style="margin-right:0.02778em;">θ</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord scriptstyle uncramped"><span class="mord mathrm">′</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mclose">)</span><span class="mord mspace qquad"></span><span class="mord"><span class="mord mathit">x</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord scriptstyle uncramped"><span class="mord mathrm">′</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mrel">∼</span><span class="mord"><span class="mord mathit" style="margin-right:0.02778em;">D</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.02778em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit" style="margin-right:0.10903em;">N</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span></div></td>
+</tr>
+<tr>
+<td>Mean prediction gain (MPG)</td>
+<td><div style="text-align: center;">  <span class="katex"><span class="katex-mathml"><math><semantics><mrow><mspace width="0.277778em"></mspace><mspace width="0.277778em"></mspace><msub><mi>ν</mi><mrow><mi>M</mi><mi>P</mi><mi>G</mi></mrow></msub><mo>:</mo><mo>=</mo><mi>L</mi><mo>(</mo><msup><mi>x</mi><mrow><mi mathvariant="normal">′</mi></mrow></msup><mo separator="true">,</mo><mi>θ</mi><mo>)</mo><mo>−</mo><mi>L</mi><mo>(</mo><msup><mi>x</mi><mrow><mi mathvariant="normal">′</mi></mrow></msup><mo separator="true">,</mo><msup><mi>θ</mi><mrow><mi mathvariant="normal">′</mi></mrow></msup><mo>)</mo><mspace width="2em"></mspace><mspace width="0.277778em"></mspace><msup><mi>x</mi><mrow><mi mathvariant="normal">′</mi></mrow></msup><mo>∼</mo><msub><mi>D</mi><mi>k</mi></msub><mo separator="true">,</mo><mi>k</mi><mo>∼</mo><msub><mi>U</mi><mi>N</mi></msub><mspace width="0.277778em"></mspace><mspace width="0.277778em"></mspace></mrow><annotation encoding="application/x-tex">\;\;\nu_{MPG} := L(x&#x27;, \theta) - L(x&#x27;, \theta&#x27;) \qquad \; x&#x27; \sim D_k, k \sim U_N\;\;</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.751892em;"></span><span class="strut bottom" style="height:1.001892em;vertical-align:-0.25em;"></span><span class="base textstyle uncramped"><span class="mord mspace thickspace"></span><span class="mord mspace thickspace"></span><span class="mord"><span class="mord mathit" style="margin-right:0.06366em;">ν</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.06366em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord scriptstyle cramped"><span class="mord mathit" style="margin-right:0.10903em;">M</span><span class="mord mathit" style="margin-right:0.13889em;">P</span><span class="mord mathit">G</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mrel">:</span><span class="mrel">=</span><span class="mord mathit">L</span><span class="mopen">(</span><span class="mord"><span class="mord mathit">x</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord scriptstyle uncramped"><span class="mord mathrm">′</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mpunct">,</span><span class="mord mathit" style="margin-right:0.02778em;">θ</span><span class="mclose">)</span><span class="mbin">−</span><span class="mord mathit">L</span><span class="mopen">(</span><span class="mord"><span class="mord mathit">x</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord scriptstyle uncramped"><span class="mord mathrm">′</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mpunct">,</span><span class="mord"><span class="mord mathit" style="margin-right:0.02778em;">θ</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord scriptstyle uncramped"><span class="mord mathrm">′</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mclose">)</span><span class="mord mspace qquad"></span><span class="mord mspace thickspace"></span><span class="mord"><span class="mord mathit">x</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord scriptstyle uncramped"><span class="mord mathrm">′</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mrel">∼</span><span class="mord"><span class="mord mathit" style="margin-right:0.02778em;">D</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.02778em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit" style="margin-right:0.03148em;">k</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mpunct">,</span><span class="mord mathit" style="margin-right:0.03148em;">k</span><span class="mrel">∼</span><span class="mord"><span class="mord mathit" style="margin-right:0.10903em;">U</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.10903em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathit" style="margin-right:0.10903em;">N</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mord mspace thickspace"></span><span class="mord mspace thickspace"></span></span></span></span></div></td>
+</tr>
+<tr>
+<td>Gradient variational complexity gain (GVCG)</td>
+<td><div style="text-align: center;"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mspace width="0.277778em"></mspace><mspace width="0.277778em"></mspace><msub><mi>ν</mi><mrow><mi>G</mi><mi>V</mi><mi>C</mi><mi>G</mi></mrow></msub><mo>:</mo><mo>=</mo><mo>[</mo><msub><mi mathvariant="normal">∇</mi><mrow><mi>ϕ</mi><mo separator="true">,</mo><mi>ψ</mi></mrow></msub><mi>K</mi><mi>L</mi><mo>(</mo><msub><mi>P</mi><mrow><mi>ϕ</mi></mrow></msub><mi mathvariant="normal">∥</mi><msub><mi>Q</mi><mrow><mi>ψ</mi></mrow></msub><mo>)</mo><msup><mo>]</mo><mi mathvariant="normal">⊤</mi></msup><msub><mi mathvariant="normal">∇</mi><mrow><mi>ϕ</mi></mrow></msub><msub><mrow><mi mathvariant="double-struck">E</mi></mrow><mrow><mi>θ</mi><mo>∼</mo><msub><mi>P</mi><mrow><mi>ϕ</mi></mrow></msub></mrow></msub><mi>L</mi><mo>(</mo><mi>x</mi><mo separator="true">,</mo><mi>θ</mi><mo>)</mo><mspace width="0.277778em"></mspace><mspace width="0.277778em"></mspace></mrow><annotation encoding="application/x-tex">\;\;\nu_{GVCG} := [\nabla_{\phi,\psi} KL(P_{\phi}\|Q_{\psi})]^\top \nabla_{\phi} \mathbb{E}_{\theta \sim P_{\phi}} L(x, \theta)\;\;</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.849108em;"></span><span class="strut bottom" style="height:1.202188em;vertical-align:-0.35307999999999995em;"></span><span class="base textstyle uncramped"><span class="mord mspace thickspace"></span><span class="mord mspace thickspace"></span><span class="mord"><span class="mord mathit" style="margin-right:0.06366em;">ν</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.06366em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord scriptstyle cramped"><span class="mord mathit">G</span><span class="mord mathit" style="margin-right:0.22222em;">V</span><span class="mord mathit" style="margin-right:0.07153em;">C</span><span class="mord mathit">G</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mrel">:</span><span class="mrel">=</span><span class="mopen">[</span><span class="mord"><span class="mord mathrm">∇</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord scriptstyle cramped"><span class="mord mathit">ϕ</span><span class="mpunct">,</span><span class="mord mathit" style="margin-right:0.03588em;">ψ</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mord mathit" style="margin-right:0.07153em;">K</span><span class="mord mathit">L</span><span class="mopen">(</span><span class="mord"><span class="mord mathit" style="margin-right:0.13889em;">P</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:-0.13889em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord scriptstyle cramped"><span class="mord mathit">ϕ</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mord mathrm">∥</span><span class="mord"><span class="mord mathit">Q</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord scriptstyle cramped"><span class="mord mathit" style="margin-right:0.03588em;">ψ</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mclose">)</span><span class="mclose"><span class="mclose">]</span><span class="vlist"><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord mathrm">⊤</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mord"><span class="mord mathrm">∇</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord scriptstyle cramped"><span class="mord mathit">ϕ</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class=""><span class="mord textstyle uncramped"><span class="mord mathbb">E</span></span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord scriptstyle cramped"><span class="mord mathit" style="margin-right:0.02778em;">θ</span><span class="mrel">∼</span><span class="mord"><span class="mord mathit" style="margin-right:0.13889em;">P</span><span class="vlist"><span style="top:0.15122857142857138em;margin-right:0.07142857142857144em;margin-left:-0.13889em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-scriptstyle scriptscriptstyle cramped"><span class="mord scriptscriptstyle cramped"><span class="mord mathit">ϕ</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mord mathit">L</span><span class="mopen">(</span><span class="mord mathit">x</span><span class="mpunct">,</span><span class="mord mathit" style="margin-right:0.02778em;">θ</span><span class="mclose">)</span><span class="mord mspace thickspace"></span><span class="mord mspace thickspace"></span></span></span></span></div></td>
+</tr>
+<tr>
+<td>L2 gain (L2G)</td>
+<td><div style="text-align: center;"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>L</mi><mrow><mi>L</mi><mn>2</mn></mrow></msub><mo>(</mo><mi>x</mi><mo separator="true">,</mo><mi>θ</mi><mo>)</mo><mo>=</mo><mi>L</mi><mo>(</mo><mi>x</mi><mo separator="true">,</mo><mi>θ</mi><mo>)</mo><mo>+</mo><mfrac><mrow><mi>α</mi></mrow><mrow><mn>2</mn></mrow></mfrac><mi mathvariant="normal">∥</mi><mi>θ</mi><msubsup><mi mathvariant="normal">∥</mi><mn>2</mn><mn>2</mn></msubsup></mrow><annotation encoding="application/x-tex">L_{L2}(x, \theta) = L(x, \theta) + \frac{\alpha}{2} \| \theta \|_2^2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.8141079999999999em;"></span><span class="strut bottom" style="height:1.1591079999999998em;vertical-align:-0.345em;"></span><span class="base textstyle uncramped"><span class="mord"><span class="mord mathit">L</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord scriptstyle cramped"><span class="mord mathit">L</span><span class="mord mathrm">2</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mopen">(</span><span class="mord mathit">x</span><span class="mpunct">,</span><span class="mord mathit" style="margin-right:0.02778em;">θ</span><span class="mclose">)</span><span class="mrel">=</span><span class="mord mathit">L</span><span class="mopen">(</span><span class="mord mathit">x</span><span class="mpunct">,</span><span class="mord mathit" style="margin-right:0.02778em;">θ</span><span class="mclose">)</span><span class="mbin">+</span><span class="mord reset-textstyle textstyle uncramped"><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span><span class="mfrac"><span class="vlist"><span style="top:0.345em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord scriptstyle cramped"><span class="mord mathrm">2</span></span></span></span><span style="top:-0.22999999999999998em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle textstyle uncramped frac-line"></span></span><span style="top:-0.394em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord scriptstyle uncramped"><span class="mord mathit" style="margin-right:0.0037em;">α</span></span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="sizing reset-size5 size5 reset-textstyle textstyle uncramped nulldelimiter"></span></span><span class="mord mathrm">∥</span><span class="mord mathit" style="margin-right:0.02778em;">θ</span><span class="mord"><span class="mord mathrm">∥</span><span class="vlist"><span style="top:0.24810799999999997em;margin-left:0em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathrm">2</span></span></span><span style="top:-0.363em;margin-right:0.05em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle uncramped"><span class="mord mathrm">2</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span></span></span></span></div></td>
+</tr>
+</tbody>
+</table>
+<p>In this work, we will study the effect of two particular types of progress signals:</p>
+<ol>
+<li><strong>Return gain</strong>: This corresponds to the RL equivalent of &quot;prediction gain&quot; in  the table above. It is a simple signal, which simply measures the increase in return after having trained on a given task.</li>
+<li><strong>Gradient prediction gain</strong>: This signal use the sum of gradients of the student as an indicator for the student having “learnt” something. Indeed, given that the student is being trained to optimise its policy, if the policy is optimal (or indeed good enough to get good rewards), there will be nothing to optimize, and hence no gradients applied.</li>
+</ol>
+<p>We will compare against using no Teacher, and just randomly choosing a task to train the Student on.
+This will be our &quot;random curriculum&quot; baseline.</p>
+<hr>
+<h2>Results</h2>
+<p>Here we compare different progress signals, and show how they affect learning progress of the Student.</p>
+<p>First, let's see how the <strong>Gradient prediction gain</strong> signal fares to drive our teacher:</p>
+<div style="text-align: left;">
+<img src="assets/results_gradient_prediction_gain_curves.png" style="display: block; margin: auto; width: 120%;"/>
+<figcaption><b>Teacher task selection probabilities and student performance for the Gradient prediction gain signal.</b><br/>
+(Top) Teacher task selection probabilities evolution as a functon of teacher updates (i.e. number of tasks shown to the student). (Bottom) Average rewards achieved by the student on all tasks, as the curriculum progresses.
+</figcaption>
+</div>
+<p>As shown, some tasks start getting selected early on, after some quick exploration. These actually correspond to simple tasks, and the student quickly learns to solve these tasks well.
+Later during training, a medium task is selected (make stick), also allowing this task to be learned by the student.
+However, we found that the Gradient prediction gain tends to stick to proposing these simple tasks and does not really expand the curriculum, at least with our current parameters.</p>
+<p>We can verify the effectiveness of our automated curriculum by showing the performance of the student at various stages of training, when using different progress signals for our teacher:</p>
+<!-- Barplot comparison -->
+<div style="text-align: left;">
+<!-- Switching buttons -->
+<img class="switcher" id="switcher-1" src="assets/switcher_1.png"
+    onmouseover="switchBarplot(1)"
+    style="margin: auto; width: 150px;" />
+<img class="switcher" id="switcher-2" src="assets/switcher_2.png"
+    onmouseover="switchBarplot(2)"
+    style="margin: auto; width: 150px;" />
+<img class="switcher" id="switcher-3" src="assets/switcher_3.png"
+    onmouseover="switchBarplot(3)"
+    style="margin: auto; width: 150px;" />
+<!-- Barplots -->
+<p><img id="barplot-switched"
+    src="assets/results_barplot_1.png"
+    style="display: block; margin: auto; width: 130%;"/></p>
+<!-- Preload the other ones but hide them -->
+<img src="assets/results_barplot_2.png" style="display:none;">
+<img src="assets/results_barplot_3.png" style="display:none;">
+<figcaption style="color:#FF6C00;">Hover on the training stages to see the different barplots at different stages.</figcaption>
+<figcaption><b>Comparison of progress signals effectiveness</b><br/>
+Performance of student on all tasks, while using either <b>gradient prediction gain</b>, <b>return gain</b> or a <b>random curriculum</b>. Early during training corresponds to 50,000 steps, Mid-training to 30,000,000 steps and late training 100,000,000 steps.
+An average returns of 1 correspond to optimally picking up and craft only what is necessary to solve the task.
+</figcaption>
+</div>
+<p>We can compare the performance of our three progress signals at various points during training, to see how they drive the student's performance.</p>
+<ol>
+<li>Early on both progress signals help the student get off the ground quickly on simple tasks, whereas the random curriculum lost time on proposing tasks that don't match student's capabilities and hence produce no gradients.</li>
+<li>Midway through training, the gradient prediction gain helped student learn a few tasks well, but is getting stuck proposing similar tasks. The random curriculum is getting better, but the return gain still does better and covers more tasks.</li>
+<li>Late during training, the Return gain managed to teach many of the tasks, even more complex ones! It’s better than a random curriculum, and please note that we didn’t try to optimize the Teacher parameters much and would be exciting to explore in the future.</li>
+</ol>
+<p>Hence, in our current experiments, the <strong>Return gain</strong> performs well, and seems to help the Student learn complex tasks faster.
+We can look at its full behaviour through training, by observing the probabilities of selecting different tasks as the curriculum progresses:</p>
+<div style="text-align: left;">
+<img src="assets/results_returngain_curve.png" style="display: block; margin: auto; width: 120%;"/>
+<figcaption><b>Teacher task selection probabilities for the Return gain signal.</b><br/>
+Teacher task selection probabilities evolution as a function of teacher updates (i.e. number of tasks shown to the student).
+</figcaption>
+</div>
+<p>This figure is too hard to interpret, but we can improve that, by leveraging the fact that our 17 tasks can be grouped by their <em>difficulty</em>.
+In this case, we defined difficulty as the <em>number of steps</em> required to solve them: simple collection tasks like &quot;get grass&quot; would have difficulty=1, whereas complex tasks like &quot;get gem&quot; would have difficulty=5.
+Grouping and renormalising the probabilities of choosing tasks of different difficulties lead to the following curriculum:</p>
+<div style="text-align: left;">
+<img src="assets/results_returngain_difficulty_curve.png" style="display: block; margin: auto; width: 120%;"/>
+<figcaption><b>Teacher task selection probabilities, grouped by difficulty.</b><br/>
+Grouping (and renormalizing) the tasks by their difficulties, a clear pattern emerges. Simple tasks are selected early on, but are then discarded to let more complex tasks into the curriculum.
+</figcaption>
+</div>
+<p>We can see that the Teacher does exactly what we’d like it to do!</p>
+<ol>
+<li>Early on, it shows simple tasks of length 1, but the agent learns them really quickly. So it stops showing them from 1000 lessons onwards.</li>
+<li>It switches to slightly more complex tasks, of length 2, and then removes them too after 3000 lessons.</li>
+<li>For a long time, it shows medium and complicated tasks, because the agent is slowly learning on them.</li>
+<li>Finally at the end, it starts presenting the hardest tasks we have! It is possible that it also tries to show tasks of difficulty 6 earlier (around 4000 lessons in) but stops when the agent doesn’t progress on them well enough.</li>
+</ol>
+<p>Overall, this led to our Teacher implementing some very interesting behaviour, quite compatible with how an optimal curriculum, taking the Student performance into account, should behave.
+But we’ll need to do more experiments to see how well it works and if we can optimise parameters to make it even faster.</p>
+<h3>Trained Student behaviour</h3>
+<p>Finally, we can see how our student tackles our tasks, after having followed and learned from an automated curriculum.</p>
+<div style="text-align: center;">
+<video autoplay muted playsinline loop style="display: block; margin: auto; width: 60%;"><source src="assets/mp4/trained_agent.mp4" type="video/mp4"/></video>
+<figcaption><b> Trained agent solving a large set of our crafting tasks.</b><br/>
+Behaviour of a policy learnt by a student when using an automated curriculum to learn all tasks. We show tasks that the agent learnt well (see barplot above). The task instruction is shown at the top, the 2D grid shows the full environment, and the bottom row indicates the agent's inventory.
+</figcaption>
+</div>
+<p>This video shows the trained behaviour of a policy on all the tasks that are learnt well. You can see that the agent moves well and picks up what’s needed and transforms them into the correct workshop, successfully crafting complex recipes purely from scratch.</p>
+<hr>
+<h2>Summary and Future directions</h2>
+<p>We saw that using an automated curriculum using a Return Gain signal helped our agent solve more complex tasks, where a random curriculum would fail or be too slow.
+It led to interesting teaching dynamics, varying the tasks presented to the agent depending on their usefulness to drive learning: it allowed the student to learn incrementally, solve simple tasks and transfer to more complex settings.</p>
+<p>We found that using a multi-armed bandit framework for the Teacher to be quite flexible and well adapted to our setting.
+But we could improve it to take other signals into account, such as safety requirements (Multi Objective Bandit extension), or using more advanced algorithms to handle the changing student performance.</p>
+<p>However, we have to assess the effect of the teacher parameters (it is unclear so far if we could make the gradient prediction gain signal work by forcing it to explore tasks more aggressively), and analyse their interactions with student hyperparameters for learning.
+We did not try to explore different Student architectures either, but this would be a very interesting avenue, particularly if we can move away from the feature observations and directly use our generated image observations instead.</p>
+<p>It's worth noting that we did not leverage the hierarchical nature of our tasks to make our student more efficient in solving complex tasks.
+We could do so by moving towards a Hierarchical RL framework, where we could also leverage the Teacher as a way to propose sequences of sub-tasks to train on, or to learn to compose together.</p>
+<p><em>This work was started in Jeju Deep Learning Camp 2018 and is meant to be a live research project and will be revised and expanded over time.</em></p>
+</dt-article>
+<dt-appendix>
+<h2>Acknowledgments</h2>
+<p>This template has been adapted from the <a href="https://github.com/worldmodels/worldmodels.github.io">World Model template</a>, written and kindly open-sourced by <a href="https://twitter.com/hardmaru">David Ha</a>.</p>
+<p>The experiments in this article were performed on both a P100 GPU and a 64-core CPU Ubuntu Linux virtual machine provided by <a href="https://cloud.google.com/">Google Cloud Platform</a>, using <a href="https://www.tensorflow.org/">TensorFlow</a>.</p>
+<h3>Open Source Code</h3>
+<p>The instructions to reproduce the experiments in this work is available <a href="https://github.com/Feryal/jeju_project">here</a>.</p>
+<h3>Reuse</h3>
+<p>Diagrams and text are licensed under Creative Commons Attribution <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a> with the <a href="https://github.com/">source available on GitHub</a>, unless noted otherwise. The figures that have been reused from other sources don’t fall under this license and can be recognized by the citations in their caption.</p>
+<h2 id="appendix">Appendix</h2>
+<p>In this section we will describe in more details the models and training methods used in this work.</p>
+<h2>Bandit Toy Example</h2>
+<p>As a toy example of how EXP3 work, we can test it on a simple situation with fixed reward allocations:
+Consider 3 tasks, providing rewards with fixed probabilities of <span class="katex"><span class="katex-mathml"><math><semantics><mrow><msub><mi>p</mi><mn>1</mn></msub><mo>=</mo><mn>0</mn><mi mathvariant="normal">.</mi><mn>2</mn><mo separator="true">,</mo><msub><mi>p</mi><mn>2</mn></msub><mo>=</mo><mn>0</mn><mi mathvariant="normal">.</mi><mn>5</mn><mo separator="true">,</mo><msub><mi>p</mi><mn>3</mn></msub><mo>=</mo><mn>0</mn><mi mathvariant="normal">.</mi><mn>3</mn></mrow><annotation encoding="application/x-tex">p_1=0.2, p_2=0.5, p_3=0.3</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="strut" style="height:0.64444em;"></span><span class="strut bottom" style="height:0.8388800000000001em;vertical-align:-0.19444em;"></span><span class="base textstyle uncramped"><span class="mord"><span class="mord mathit">p</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathrm">1</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mrel">=</span><span class="mord mathrm">0</span><span class="mord mathrm">.</span><span class="mord mathrm">2</span><span class="mpunct">,</span><span class="mord"><span class="mord mathit">p</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathrm">2</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mrel">=</span><span class="mord mathrm">0</span><span class="mord mathrm">.</span><span class="mord mathrm">5</span><span class="mpunct">,</span><span class="mord"><span class="mord mathit">p</span><span class="vlist"><span style="top:0.15em;margin-right:0.05em;margin-left:0em;"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span><span class="reset-textstyle scriptstyle cramped"><span class="mord mathrm">3</span></span></span><span class="baseline-fix"><span class="fontsize-ensurer reset-size5 size5"><span style="font-size:0em;">​</span></span>​</span></span></span><span class="mrel">=</span><span class="mord mathrm">0</span><span class="mord mathrm">.</span><span class="mord mathrm">3</span></span></span></span>. In this situation, the teacher should try these tasks enough time to discover that task 2 is the most valuable.
+The evolution of the probability of selecting a task is shown in the figure below.</p>
+<div style="text-align: left;">
+<img src="assets/exp3_example.png" style="display: block; margin: auto; width: 95%;"/>
+<figcaption><b>Example training curve for EXP3 on a toy example.</b><br/>
+Given an environment with 3 tasks, with different reward probabilities, EXP3 should collect enough evidence to discover which task to exploit. The plot shows the evolution of the tasks probabilities through time.
+</figcaption>
+</div>
+<p>As one can see, the Teacher explores early, sampling enough time to get a good estimate of the rewards associated with each task.
+Then after enough evidence has been collected, it starts exploiting task 2, as one would expect.</p>
+<script src="https://gist.github.com/Feryal/ddfe13322e7f2c6186f723f37c444a21.js"></script>
+<hr>
+<h2>Student Architecture</h2>
+<ul>
+<li>Inputs:
+<ul>
+<li>Observations: Flattened 5x5 egocentric view, 1-hot features &amp; inventory. 1072 features.</li>
+<li>Task instructions: strings of task names.</li>
+</ul>
+</li>
+<li>Observation processing:
+2x fully connected with 256 units</li>
+<li>Language processing:
+<ul>
+<li>Embedding: 20 units</li>
+<li>LSTM for words: 64 units</li>
+</ul>
+</li>
+<li>LSTM (recurrent core): 64 units</li>
+<li>Policy:
+Softmax (5 possible actions: Down/Right/Left/Up/Use)</li>
+<li>Value prediction (Critic):
+Linear layer to scalar</li>
+</ul>
+<hr>
+</dt-appendix>
+</dt-appendix>
+</body>
+<script type="text/bibliography">
+  @article{graves2017automated,
+    title={Automated curriculum learning for neural networks},
+    author={Graves, Alex and Bellemare, Marc G and Menick, Jacob and Munos, Remi and Kavukcuoglu, Koray},
+    journal={arXiv preprint},
+    url={https://arxiv.org/pdf/1704.03003.pdf},
+    year={2017}
+  }
+
+  @ARTICLE{2016arXiv161101796A,
+    author = {Andreas, J. and Klein, D. and Levine, S.},
+     title = {Modular Multitask Reinforcement Learning with Policy Sketches},
+   journal = {ArXiv e-prints},
+ archivePrefix = "arXiv",
+    eprint = {1611.01796},
+  primaryClass = "cs.LG",
+  keywords = {Computer Science - Learning, Computer Science - Neural and Evolutionary Computing},
+      year = 2016,
+     month = nov,
+    adsurl = {http://adsabs.harvard.edu/abs/2016arXiv161101796A},
+   adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+ }
+
+@article{DBLP:journals/corr/abs-1802-01561,
+  author    = {Lasse Espeholt and
+               Hubert Soyer and
+               Remi Munos and
+               Karen Simonyan and
+               Volodymyr Mnih and
+               Tom Ward and
+               Yotam Doron and
+               Vlad Firoiu and
+               Tim Harley and
+               Iain Dunning and
+               Shane Legg and
+               Koray Kavukcuoglu},
+  title     = {IMPALA: Scalable Distributed Deep-RL with Importance Weighted Actor-Learner Architectures},
+  journal   = {Proceedings of the International Conference on Machine Learning (ICML)},
+  volume    = {abs/1802.01561},
+  year      = {2018},
+  url       = {http://arxiv.org/abs/1802.01561},
+  archivePrefix = {arXiv},
+  eprint    = {1802.01561},
+  timestamp = {Thu, 01 Mar 2018 15:00:45 +0100},
+  biburl    = {https://dblp.org/rec/bib/journals/corr/abs-1802-01561},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@online{ impala_github,
+  author = "Espeholt, Lasse and Soyer, Hubert and Munos, Remi and Simonyan, Karen and Mnih, Volodymir and Ward, Tom and Doron, Yotam and Firoiu, Vlad and Harley, Tim and Dunning, Iain",
+  publisher = "Github",
+  title = "Github: Scalable Distributed Deep-RL with Importance Weighted Actor-Learner Architectures",
+  year = "2018",
+  url = "https://github.com/deepmind/scalable_agent",
+  note = "[Online; accessed 01-Jul-2018]"
+}
+
+@online{ jeju_project_github,
+  author = "Feryal Behbahani",
+  publisher = "Github",
+  title = "Automated Curriculum Learning",
+  year = "2018",
+  url = "https://github.com/Feryal/jeju_project",
+  note = "[Online; accessed 01-Jul-2018]"
+}
+
+@article{Auer:2003:NMB:589343.589365,
+  author = {Auer, Peter and Cesa-Bianchi, Nicolo and Freund, Yoav and Schapire, Robert E.},
+  title = {The Nonstochastic Multiarmed Bandit Problem},
+  journal = {SIAM J. Comput.},
+  issue_date = {2003},
+  volume = {32},
+  number = {1},
+  month = jan,
+  year = {2003},
+  issn = {0097-5397},
+  pages = {48--77},
+  numpages = {30},
+  url = {https://doi.org/10.1137/S0097539701398375},
+  doi = {10.1137/S0097539701398375},
+  acmid = {589365},
+  publisher = {Society for Industrial and Applied Mathematics},
+  address = {Philadelphia, PA, USA},
+  keywords = {adversarial bandit problem, unknown matrix games},
+ }
+
+ @ARTICLE{2015arXiv150803326Z,
+  author = {Zhou, L.},
+   title = {A Survey on Contextual Multi-armed Bandits},
+ journal = {ArXiv e-prints},
+archivePrefix = "arXiv",
+  eprint = {1508.03326},
+primaryClass = "cs.LG",
+keywords = {Computer Science - Learning},
+    year = 2015,
+   month = aug,
+  adsurl = {http://adsabs.harvard.edu/abs/2015arXiv150803326Z},
+ adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
+
+@ARTICLE{s10_powerplay,
+  AUTHOR={Schmidhuber, J.},
+  TITLE={PowerPlay: Training an Increasingly General Problem Solver by Continually Searching for the Simplest Still Unsolvable Problem},
+  JOURNAL={Frontiers in Psychology},
+  VOLUME={4},
+  PAGES={313},
+  YEAR={2013},
+  URL={https://www.frontiersin.org/article/10.3389/fpsyg.2013.00313},
+  DOI={10.3389/fpsyg.2013.00313},
+  ISSN={1664-1078},
+  }
+
+</script>
+
+<script>
+  // Late select first barplot
+  switchBarplot(1);
+</script>

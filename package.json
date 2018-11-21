@@ -1,0 +1,15 @@
+{
+  "name": "automatedcurriculum",
+  "version": "0.0.1",
+  "dependencies": {
+    "http-server": "^0.11.1",
+    "markdown-it": "*",
+    "markdown-it-center-text": "*",
+    "markdown-it-katex": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Feryal/automatedcurriculum.github.io"
+  },
+  "license": "MIT"
+}
